@@ -13,7 +13,7 @@ const productRoutes = require('./routes/productRoutes');
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://your-frontend.vercel.app'],
+  origin: ['http://localhost:5173', 'https://inventory-delivery-system.vercel.app'],
   credentials: true
 }));
 app.use(express.json());
