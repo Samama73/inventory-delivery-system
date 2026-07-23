@@ -2,7 +2,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 // Database file 'inventory.db' backend folder me hi ban jayegi
-const db = new Database(path.join(__dirname, '..', 'inventory.db'));
+const db = new Database(path.join('/data', 'inventory.db'));
 
 // Better performance ke liye WAL mode enable karo
 db.pragma('journal_mode = WAL');
