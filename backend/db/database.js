@@ -37,6 +37,15 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
 // Naya Description column items table me add karne ke liye (agar database pehle se bana hua hai)
 try {
   db.exec(`ALTER TABLE items ADD COLUMN description TEXT DEFAULT ''`);
