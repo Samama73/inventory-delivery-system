@@ -69,7 +69,7 @@ function addDelivery(req, res) {
   const runTransaction = db.transaction(() => {
     const stmt = db.prepare(`
       INSERT INTO deliveries (item_name, quantity, customer_name, phone_number, address, delivery_date, status, unit_price, total_amount, remarks, description)
-      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
     `);
     const result = stmt.run(
       item_name, qty, customer_name, phone_number || '', address || '',
@@ -235,8 +235,8 @@ function addDeliveryGroup(req, res) {
 
       db.prepare(`
         INSERT INTO deliveries (item_name, quantity, customer_name, phone_number, address, delivery_date, status, unit_price, total_amount, remarks, description, order_id)
-        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
-      `).run(line.item_name, qty, customer_name, phone_number || '', address || '', delivery_date || null, unitPrice, totalAmount, remarks || '', line.description || '',orderId);
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
+      `).run(line.item_name, qty, customer_name, phone_number || '', address || '', delivery_date || null, unitPrice, totalAmount, remarks || '', line.description || '', orderId);
 
       db.prepare(`
         UPDATE items SET quantity = quantity - ?, updated_at = datetime('now', 'localtime') WHERE id = ?
@@ -249,12 +249,12 @@ function addDeliveryGroup(req, res) {
     const created = db.prepare('SELECT * FROM deliveries WHERE order_id = ?').all(orderId);
     res.status(201).json(created);
   } catch (err) {
-  console.error('addDeliveryGroup error:', err.message); // Debug ke liye
-  const [type, name] = err.message.split(':');
-  if (type === 'ITEM_NOT_FOUND') return res.status(404).json({ error: `${name} inventory mein maujood nahi hai.` });
-  if (type === 'INSUFFICIENT_STOCK') return res.status(400).json({ error: `${name} ka stock kam hai.` });
-  res.status(500).json({ error: 'Order add karte waqt gadbad ho gayi.' });
-}
+    console.error('addDeliveryGroup error:', err.message);
+    const [type, name] = err.message.split(':');
+    if (type === 'ITEM_NOT_FOUND') return res.status(404).json({ error: `${name} inventory mein maujood nahi hai.` });
+    if (type === 'INSUFFICIENT_STOCK') return res.status(400).json({ error: `${name} ka stock kam hai.` });
+    res.status(500).json({ error: 'Order add karte waqt gadbad ho gayi.' });
+  }
 }
 
 // Ek order ki sab items lao
@@ -295,7 +295,7 @@ function updateDeliveryGroup(req, res) {
 
       db.prepare(`
         INSERT INTO deliveries (item_name, quantity, customer_name, phone_number, address, delivery_date, status, unit_price, total_amount, remarks, description, order_id)
-        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
       `).run(line.item_name, qty, customer_name, phone_number || '', address || '', delivery_date || null, unitPrice, totalAmount, remarks || '', line.description || '', order_id);
 
       db.prepare(`UPDATE items SET quantity = quantity - ?, updated_at = datetime('now', 'localtime') WHERE id = ?`)
@@ -308,6 +308,7 @@ function updateDeliveryGroup(req, res) {
     const updated = db.prepare('SELECT * FROM deliveries WHERE order_id = ?').all(order_id);
     res.json(updated);
   } catch (err) {
+    console.error('updateDeliveryGroup error:', err.message);
     const [type, name] = err.message.split(':');
     if (type === 'ITEM_NOT_FOUND') return res.status(404).json({ error: `${name} inventory mein maujood nahi hai.` });
     if (type === 'INSUFFICIENT_STOCK') return res.status(400).json({ error: `${name} ka stock kam hai.` });
