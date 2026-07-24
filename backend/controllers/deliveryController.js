@@ -249,11 +249,12 @@ function addDeliveryGroup(req, res) {
     const created = db.prepare('SELECT * FROM deliveries WHERE order_id = ?').all(orderId);
     res.status(201).json(created);
   } catch (err) {
-    const [type, name] = err.message.split(':');
-    if (type === 'ITEM_NOT_FOUND') return res.status(404).json({ error: `${name} inventory mein maujood nahi hai.` });
-    if (type === 'INSUFFICIENT_STOCK') return res.status(400).json({ error: `${name} ka stock kam hai.` });
-    res.status(500).json({ error: 'Order add karte waqt gadbad ho gayi.' });
-  }
+  console.error('addDeliveryGroup error:', err.message); // Debug ke liye
+  const [type, name] = err.message.split(':');
+  if (type === 'ITEM_NOT_FOUND') return res.status(404).json({ error: `${name} inventory mein maujood nahi hai.` });
+  if (type === 'INSUFFICIENT_STOCK') return res.status(400).json({ error: `${name} ka stock kam hai.` });
+  res.status(500).json({ error: 'Order add karte waqt gadbad ho gayi.' });
+}
 }
 
 // Ek order ki sab items lao
