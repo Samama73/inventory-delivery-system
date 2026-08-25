@@ -361,7 +361,22 @@ function DeliveryFormInline({ order, onClose, onSaved }) {
                           className="w-full"
                         />
                         {selectedItem && (
-                          <p className="text-xs text-emerald-600 mt-1 leading-none">Available: {available} {selectedItem.unit}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-emerald-600 leading-none">Available: {available} {selectedItem.unit}</p>
+                            {selectedItem.color && (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 leading-none">
+                                <span
+                                  className="w-3 h-3 rounded-full border border-gray-300 shadow-sm flex-shrink-0"
+                                  style={{
+                                    backgroundColor: /^#[0-9A-Fa-f]{3,6}$/.test(selectedItem.item_code)
+                                      ? selectedItem.item_code
+                                      : 'transparent',
+                                  }}
+                                ></span>
+                                {selectedItem.color}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="px-3 py-3 border-r border-gray-100 align-middle">

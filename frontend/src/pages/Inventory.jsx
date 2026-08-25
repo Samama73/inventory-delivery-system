@@ -120,7 +120,8 @@ function Inventory() {
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">#</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Asset Name</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item Code</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">HEX Code</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Color</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Count</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unit</th>
@@ -137,6 +138,19 @@ function Inventory() {
                         <td className="px-6 py-4 text-sm font-bold text-slate-800">{item.name}</td>
                         <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                           {item.item_code || <span className="text-slate-300 italic">-</span>}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                          {item.color ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-sm"
+                                style={{ backgroundColor: /^#[0-9A-Fa-f]{3,6}$/.test(item.item_code) ? item.item_code : 'transparent' }}
+                              ></span>
+                              {item.color}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 italic">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                           {item.category || <span className="text-slate-300 italic">-</span>}
@@ -193,18 +207,19 @@ function ItemFormInline({ item, onClose, onSaved }) {
   const [products, setProducts] = useState([]);
 
   const [formData, setFormData] = useState(
-  item
-    ? [{
-        name: item.name,
-        item_code: item.item_code || '',
-        category: item.category || '',
-        description: item.description || '',
-        quantity: item.quantity,
-        unit: item.unit,
-        threshold: item.low_stock_threshold,
-      }]
-    : [{ name: '', item_code: '', category: '', description: '', quantity: '', unit: 'pcs', threshold: 5 }]
-);
+    item
+      ? [{
+          name: item.name,
+          item_code: item.item_code || '',
+          color: item.color || '',
+          category: item.category || '',
+          description: item.description || '',
+          quantity: item.quantity,
+          unit: item.unit,
+          threshold: item.low_stock_threshold,
+        }]
+      : [{ name: '', item_code: '', color: '', category: '', description: '', quantity: '', unit: 'pcs', threshold: 5 }]
+  );
 
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -214,7 +229,7 @@ function ItemFormInline({ item, onClose, onSaved }) {
   }, []);
 
   const addRow = () => {
-  setFormData([...formData, { name: '', item_code: '', category: '', description: '', quantity: '', unit: 'pcs', threshold: 5 }]);
+  setFormData([...formData, { name: '', item_code: '', color: '', category: '', description: '', quantity: '', unit: 'pcs', threshold: 5 }]);
 };
 
   const removeRow = (index) => {
@@ -237,27 +252,29 @@ function ItemFormInline({ item, onClose, onSaved }) {
         const payload = {
           name: formData[0].name,
           item_code: formData[0].item_code,
+          color: formData[0].color,
           category: formData[0].category,
           description: formData[0].description,
           quantity: Number(formData[0].quantity),
           unit: formData[0].unit,
           low_stock_threshold: Number(formData[0].threshold),
-    };
-    await api.put(`/items/${item.id}`, payload);
-  } else {
-    const promises = formData.map((data) =>
-      api.post('/items', {
-        name: data.name,
-        item_code: data.item_code,
-        category: data.category,
-        description: data.description,
-        quantity: Number(data.quantity),
-        unit: data.unit,
-        low_stock_threshold: Number(data.threshold),
-      })
-    );
-    await Promise.all(promises);
-  }
+        };
+        await api.put(`/items/${item.id}`, payload);
+      } else {
+        const promises = formData.map((data) =>
+          api.post('/items', {
+            name: data.name,
+            item_code: data.item_code,
+            color: data.color,
+            category: data.category,
+            description: data.description,
+            quantity: Number(data.quantity),
+            unit: data.unit,
+            low_stock_threshold: Number(data.threshold),
+          })
+        );
+        await Promise.all(promises);
+      }
       onSaved();
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to process request.');
@@ -297,8 +314,8 @@ function ItemFormInline({ item, onClose, onSaved }) {
               <p className="text-xs font-semibold text-gray-400 mb-3">Item {index + 1}</p>
             )}
 
-            {/* Row 1: Name, Item Code, Category, Unit */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
+            {/* Row 1: Name, HEX Code, Color, Category, Unit */}
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Item Name</label>
                 <AutocompleteInput
@@ -315,13 +332,24 @@ function ItemFormInline({ item, onClose, onSaved }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Item Code</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">HEX Code</label>
                 <input
                   type="text"
                   value={data.item_code}
                   onChange={(e) => handleChange(index, 'item_code', e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Optional"
+                  placeholder="#FFFFFF"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Color</label>
+                <input
+                  type="text"
+                  value={data.color}
+                  onChange={(e) => handleChange(index, 'color', e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g. Charcoal Black"
                 />
               </div>
 

@@ -19,7 +19,7 @@ function getItemById(req, res) {
 
 // Naya item add karo
 function addItem(req, res) {
-  const { name, item_code, category, description, quantity, unit, low_stock_threshold } = req.body;
+  const { name, item_code, color, category, description, quantity, unit, low_stock_threshold } = req.body;
 
   if (!name || quantity === undefined) {
     return res.status(400).json({ error: 'Name aur quantity dono chahiye.' });
@@ -27,12 +27,13 @@ function addItem(req, res) {
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO items (name, item_code, category, description, quantity, unit, low_stock_threshold)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO items (name, item_code, color, category, description, quantity, unit, low_stock_threshold)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const result = stmt.run(
       name,
       item_code || '',
+      color || '',
       category || '',
       description || '',
       quantity,
@@ -44,7 +45,6 @@ function addItem(req, res) {
     res.status(201).json(newItem);
   } catch (err) {
     if (err.message.includes('UNIQUE')) {
-      // Message ko theek kiya hai taaki clear rahe
       return res.status(409).json({ error: 'Ye item (same naam aur details ke sath) pehle se maujood hai.' });
     }
     res.status(500).json({ error: 'Kuch gadbad ho gayi.' });
@@ -54,7 +54,7 @@ function addItem(req, res) {
 // Item update karo (quantity, naam, etc.)
 function updateItem(req, res) {
   const { id } = req.params;
-  const { name, item_code, category, description, quantity, unit, low_stock_threshold } = req.body;
+  const { name, item_code, color, category, description, quantity, unit, low_stock_threshold } = req.body;
 
   const existing = db.prepare('SELECT * FROM items WHERE id = ?').get(id);
   if (!existing) {
@@ -63,13 +63,14 @@ function updateItem(req, res) {
 
   const stmt = db.prepare(`
     UPDATE items
-    SET name = ?, item_code = ?, category = ?, description = ?, quantity = ?, unit = ?, low_stock_threshold = ?, updated_at = datetime('now', 'localtime')
+    SET name = ?, item_code = ?, color = ?, category = ?, description = ?, quantity = ?, unit = ?, low_stock_threshold = ?, updated_at = datetime('now', 'localtime')
     WHERE id = ?
   `);
 
   stmt.run(
     name ?? existing.name,
     item_code ?? existing.item_code,
+    color ?? existing.color,
     category ?? existing.category,
     description ?? existing.description,
     quantity ?? existing.quantity,

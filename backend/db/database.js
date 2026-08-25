@@ -78,6 +78,10 @@ try {
 } catch (e) {}
 
 try {
+  db.exec(`ALTER TABLE items ADD COLUMN color TEXT DEFAULT ''`);   // 👈 ye naya add karo
+} catch (e) {}
+
+try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN order_id TEXT`);
 } catch (e) {}
 
