@@ -120,7 +120,7 @@ function Inventory() {
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">#</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Asset Name</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">HEX Code</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">HSN Code</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Color</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Unit Count</th>
@@ -140,17 +140,7 @@ function Inventory() {
                           {item.item_code || <span className="text-slate-300 italic">-</span>}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                          {item.color ? (
-                            <span className="inline-flex items-center gap-2">
-                              <span
-                                className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-sm"
-                                style={{ backgroundColor: /^#[0-9A-Fa-f]{3,6}$/.test(item.item_code) ? item.item_code : 'transparent' }}
-                              ></span>
-                              {item.color}
-                            </span>
-                          ) : (
-                            <span className="text-slate-300 italic">-</span>
-                          )}
+                          {item.color || <span className="text-slate-300 italic">-</span>}
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                           {item.category || <span className="text-slate-300 italic">-</span>}
@@ -314,7 +304,7 @@ function ItemFormInline({ item, onClose, onSaved }) {
               <p className="text-xs font-semibold text-gray-400 mb-3">Item {index + 1}</p>
             )}
 
-            {/* Row 1: Name, HEX Code, Color, Category, Unit */}
+            {/* Row 1: Name, HSN Code, Color, Category, Unit */}
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Item Name</label>
@@ -332,13 +322,13 @@ function ItemFormInline({ item, onClose, onSaved }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">HEX Code</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">HSN Code</label>
                 <input
                   type="text"
                   value={data.item_code}
                   onChange={(e) => handleChange(index, 'item_code', e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="#FFFFFF"
+                  placeholder="e.g. 9401"
                 />
               </div>
 

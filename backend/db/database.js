@@ -1,8 +1,15 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
-// Database file 'inventory.db' backend folder me hi ban jayegi
-const db = new Database(path.join('/data', 'inventory.db'));
+const dbDir = process.env.NODE_ENV === 'production' ? '/data' : __dirname;
+const dbPath = path.join(dbDir, 'inventory.db');
+
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const db = new Database(dbPath);
 
 // Better performance ke liye WAL mode enable karo
 db.pragma('journal_mode = WAL');
