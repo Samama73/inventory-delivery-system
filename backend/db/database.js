@@ -100,4 +100,40 @@ try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN description TEXT DEFAULT ''`);
 } catch (e) {}
 
+// ---------- Migration: items table se UNIQUE constraint hatao (duplication allow) ----------
+try {
+  const tableInfo = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='items'`).get();
+
+  if (tableInfo && tableInfo.sql.includes('UNIQUE')) {
+    db.exec(`
+      CREATE TABLE items_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        quantity INTEGER NOT NULL DEFAULT 0,
+        unit TEXT DEFAULT 'pcs',
+        low_stock_threshold INTEGER DEFAULT 5,
+        created_at TEXT DEFAULT (datetime('now', 'localtime')),
+        updated_at TEXT DEFAULT (datetime('now', 'localtime')),
+        item_code TEXT DEFAULT '',
+        category TEXT DEFAULT '',
+        color TEXT DEFAULT ''
+      );
+    `);
+
+    db.exec(`
+      INSERT INTO items_new (id, name, description, quantity, unit, low_stock_threshold, created_at, updated_at, item_code, category, color)
+      SELECT id, name, description, quantity, unit, low_stock_threshold, created_at, updated_at, item_code, category, color
+      FROM items;
+    `);
+
+    db.exec(`DROP TABLE items;`);
+    db.exec(`ALTER TABLE items_new RENAME TO items;`);
+
+    console.log('Migration done: items table se UNIQUE constraint hata diya gaya');
+  }
+} catch (e) {
+  console.error('Migration error:', e.message);
+}
+
 module.exports = db;
