@@ -104,7 +104,7 @@ try {
 try {
   const tableInfo = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='items'`).get();
 
-  if (tableInfo && tableInfo.sql.includes('UNIQUE')) {
+  if (tableInfo && !tableInfo.sql.includes('UNIQUE')) {
     db.exec(`
       CREATE TABLE items_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,7 +117,8 @@ try {
         updated_at TEXT DEFAULT (datetime('now', 'localtime')),
         item_code TEXT DEFAULT '',
         category TEXT DEFAULT '',
-        color TEXT DEFAULT ''
+        color TEXT DEFAULT '',
+        UNIQUE(name, item_code, color, category, description)
       );
     `);
 
