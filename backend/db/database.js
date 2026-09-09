@@ -100,25 +100,25 @@ try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN description TEXT DEFAULT ''`);
 } catch (e) {}
 
-// ---------- Migration: items table se UNIQUE constraint hatao (duplication allow) ----------
+// ---------- Migration: items table pe case-insensitive UNIQUE (name+hsn+color+category) lagao ----------
 try {
   const tableInfo = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='items'`).get();
 
-  if (tableInfo && !tableInfo.sql.includes('UNIQUE')) {
+  if (tableInfo && !tableInfo.sql.includes('UNIQUE(name, item_code, color, category)')) {
     db.exec(`
       CREATE TABLE items_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        name TEXT NOT NULL COLLATE NOCASE,
         description TEXT DEFAULT '',
         quantity INTEGER NOT NULL DEFAULT 0,
         unit TEXT DEFAULT 'pcs',
         low_stock_threshold INTEGER DEFAULT 5,
         created_at TEXT DEFAULT (datetime('now', 'localtime')),
         updated_at TEXT DEFAULT (datetime('now', 'localtime')),
-        item_code TEXT DEFAULT '',
-        category TEXT DEFAULT '',
-        color TEXT DEFAULT '',
-        UNIQUE(name, item_code, color, category, description)
+        item_code TEXT DEFAULT '' COLLATE NOCASE,
+        category TEXT DEFAULT '' COLLATE NOCASE,
+        color TEXT DEFAULT '' COLLATE NOCASE,
+        UNIQUE(name, item_code, color, category)
       );
     `);
 
@@ -131,7 +131,7 @@ try {
     db.exec(`DROP TABLE items;`);
     db.exec(`ALTER TABLE items_new RENAME TO items;`);
 
-    console.log('Migration done: items table se UNIQUE constraint hata diya gaya');
+    console.log('Migration done: naya UNIQUE (case-insensitive, sirf name+hsn+color+category) laga diya gaya');
   }
 } catch (e) {
   console.error('Migration error:', e.message);
