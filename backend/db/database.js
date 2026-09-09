@@ -104,7 +104,10 @@ try {
 try {
   const tableInfo = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='items'`).get();
 
-  if (tableInfo && !tableInfo.sql.includes('UNIQUE(name, item_code, color, category)')) {
+  const hasOldUnique = tableInfo && tableInfo.sql.includes('UNIQUE(name, item_code, color, category, description)');
+  const hasNewUnique = tableInfo && tableInfo.sql.includes('UNIQUE(name, item_code, color, category)') && !hasOldUnique;
+
+  if (tableInfo && !hasNewUnique) {
     db.exec(`
       CREATE TABLE items_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
