@@ -100,14 +100,27 @@ try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN description TEXT DEFAULT ''`);
 } catch (e) {}
 
-// ---------- Migration: items table pe case-insensitive UNIQUE (name+hsn+color+category) lagao ----------
+// ---------- Migration tracker table (yeh yaad rakhti hai konsi migration ho chuki hai) ----------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS migrations (
+    name TEXT PRIMARY KEY,
+    applied_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
+function hasMigrationRun(name) {
+  return !!db.prepare('SELECT 1 FROM migrations WHERE name = ?').get(name);
+}
+
+function markMigrationDone(name) {
+  db.prepare('INSERT INTO migrations (name) VALUES (?)').run(name);
+}
+
+// ---------- Migration: items table pe UNIQUE (name+hsn+color+category, case-sensitive) lagao ----------
+const MIGRATION_NAME = 'unique_name_hsn_color_category_v1';
+
 try {
-  const tableInfo = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='items'`).get();
-
-  const hasOldUnique = tableInfo && tableInfo.sql.includes('UNIQUE(name, item_code, color, category, description)');
-  const hasNewUnique = tableInfo && tableInfo.sql.includes('UNIQUE(name, item_code, color, category)') && !hasOldUnique;
-
-  if (tableInfo && !hasNewUnique) {
+  if (!hasMigrationRun(MIGRATION_NAME)) {
     db.exec(`
       CREATE TABLE items_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -126,7 +139,7 @@ try {
     `);
 
     db.exec(`
-      INSERT INTO items_new (id, name, description, quantity, unit, low_stock_threshold, created_at, updated_at, item_code, category, color)
+      INSERT OR IGNORE INTO items_new (id, name, description, quantity, unit, low_stock_threshold, created_at, updated_at, item_code, category, color)
       SELECT id, name, description, quantity, unit, low_stock_threshold, created_at, updated_at, item_code, category, color
       FROM items;
     `);
@@ -134,7 +147,10 @@ try {
     db.exec(`DROP TABLE items;`);
     db.exec(`ALTER TABLE items_new RENAME TO items;`);
 
-    console.log('Migration done: naya UNIQUE (case-insensitive, sirf name+hsn+color+category) laga diya gaya');
+    markMigrationDone(MIGRATION_NAME);
+    console.log('Migration done: UNIQUE (name+hsn+color+category) laga diya gaya');
+  } else {
+    console.log('Migration already applied, skip kar diya:', MIGRATION_NAME);
   }
 } catch (e) {
   console.error('Migration error:', e.message);
