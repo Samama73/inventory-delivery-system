@@ -108,16 +108,16 @@ try {
     db.exec(`
       CREATE TABLE items_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL COLLATE NOCASE,
+        name TEXT NOT NULL,
         description TEXT DEFAULT '',
         quantity INTEGER NOT NULL DEFAULT 0,
         unit TEXT DEFAULT 'pcs',
         low_stock_threshold INTEGER DEFAULT 5,
         created_at TEXT DEFAULT (datetime('now', 'localtime')),
         updated_at TEXT DEFAULT (datetime('now', 'localtime')),
-        item_code TEXT DEFAULT '' COLLATE NOCASE,
-        category TEXT DEFAULT '' COLLATE NOCASE,
-        color TEXT DEFAULT '' COLLATE NOCASE,
+        item_code TEXT DEFAULT '',
+        category TEXT DEFAULT '',
+        color TEXT DEFAULT '',
         UNIQUE(name, item_code, color, category)
       );
     `);
