@@ -354,6 +354,16 @@ function ItemFormInline({ item, onClose, onSaved }) {
                   <option value="Chairs">Chairs</option>
                   <option value="Shampoo Stations">Shampoo Stations</option>
                   <option value="Facial Beds">Facial Beds</option>
+                  <option value="Robust">Robust</option>
+                  <option value="Trolleys">Trolleys</option>
+                  <option value="Foot Tub">Foot Tub</option>
+                  <option value="Foot Rest">Foot Rest</option>
+                  <option value="Steamers">Steamers</option>
+                  <option value="Besin">Besin</option>
+                  <option value="Gadi">Gadi</option>
+                  <option value="Stools">Stools</option>
+                  <option value="Nail Art Chairs">Nail Art Chairs</option>
+                  <option value="Hydraulics">Hydraulics</option>
                 </select>
               </div>
 
