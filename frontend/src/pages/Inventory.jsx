@@ -7,6 +7,7 @@ function Inventory() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchItems();
@@ -54,6 +55,16 @@ function Inventory() {
     fetchItems();
   }
 
+  const filteredItems = items.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      item.name?.toLowerCase().includes(term) ||
+      item.item_code?.toLowerCase().includes(term) ||
+      item.color?.toLowerCase().includes(term) ||
+      item.category?.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className="space-y-8 animate-fade-in w-full pb-12">
       {/* Page Header */}
@@ -91,13 +102,20 @@ function Inventory() {
       {/* Main Data Table */}
       {!showForm && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden w-full">
-          <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/80 flex justify-between items-center">
+          <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
               </svg>
               Inventory Overview
             </h2>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, HSN code, color, category..."
+              className="w-full sm:w-72 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
           </div>
 
           {loading ? (
@@ -112,6 +130,14 @@ function Inventory() {
               </div>
               <p className="text-slate-900 font-bold text-xl">The repository is currently empty.</p>
               <p className="text-slate-500 text-sm mt-2 max-w-sm mx-auto">Please register a new asset to begin tracking your inventory and stock levels.</p>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="p-16 text-center">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-slate-100 shadow-sm">
+                <span className="text-4xl">🔍</span>
+              </div>
+              <p className="text-slate-900 font-bold text-xl">No items match your search.</p>
+              <p className="text-slate-500 text-sm mt-2 max-w-sm mx-auto">Try a different name, HSN code, color, or category.</p>
             </div>
           ) : (
             <div className="overflow-x-auto w-full">
@@ -130,7 +156,7 @@ function Inventory() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {items.map((item, idx) => {
+                  {filteredItems.map((item, idx) => {
                     const isLow = item.quantity <= item.low_stock_threshold;
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -364,6 +390,12 @@ function ItemFormInline({ item, onClose, onSaved }) {
                   <option value="Stools">Stools</option>
                   <option value="Nail Art Chairs">Nail Art Chairs</option>
                   <option value="Hydraulics">Hydraulics</option>
+                  <option value="Pedicure chair">Pedicure chair</option>
+                  <option value="Sterlizer">Sterlizer</option>
+                  <option value="Hydra machine">Hydra Machine</option>
+                  <option value="Wax heater">Wax heater</option>
+                  <option value="Korian besin">Korean basin</option>
+                  <option value="Dryer Stand">Dryer Stand</option>
                 </select>
               </div>
 
