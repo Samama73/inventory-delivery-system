@@ -24,12 +24,17 @@ function groupDeliveries(deliveries) {
     // Agar kisi bhi item ka status pending hai to poora order pending maano
     if (d.status === 'pending') groups[key].status = 'pending';
   }
-  return Object.values(groups).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return Object.values(groups).sort((a, b) => {
+  if (!a.delivery_date) return 1;
+  if (!b.delivery_date) return -1;
+  return new Date(b.delivery_date) - new Date(a.delivery_date);
+});
 }
 
 function Deliveries() {
   const [deliveries, setDeliveries] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
@@ -49,7 +54,11 @@ function Deliveries() {
     }
   }
 
-  const orders = groupDeliveries(deliveries);
+  const orders = groupDeliveries(deliveries).filter((order) => {
+    if (!dateFilter) return true;
+    if (!order.delivery_date) return false;
+    return order.delivery_date.split('T')[0] === dateFilter;
+  });
 
   async function toggleOrderStatus(order) {
     const newStatus = order.status === 'pending' ? 'completed' : 'pending';
@@ -117,25 +126,47 @@ function Deliveries() {
           {/* Toolbar */}
           <div className="px-4 py-3 border-b border-gray-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-gray-700">Delivery Records</h2>
-            <div className="flex border border-gray-300 rounded overflow-hidden text-sm">
-              {filterOptions.map((f, i) => (
-                <button
-                  key={f.value}
-                  onClick={() => setFilter(f.value)}
-                  className={`px-3 py-1.5 font-medium ${i !== 0 ? 'border-l border-gray-300' : ''} ${
-                    filter === f.value ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Filter by date</label>
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {dateFilter && (
+                  <button
+                    onClick={() => setDateFilter('')}
+                    className="text-xs font-semibold text-gray-500 hover:text-red-600"
+                    title="Clear date filter"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex border border-gray-300 rounded overflow-hidden text-sm">
+                {filterOptions.map((f, i) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setFilter(f.value)}
+                    className={`px-3 py-1.5 font-medium ${i !== 0 ? 'border-l border-gray-300' : ''} ${
+                      filter === f.value ? 'bg-blue-50 text-blue-700' : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {loading ? (
             <div className="p-12 text-center text-gray-500 text-sm">Loading deliveries...</div>
           ) : orders.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 text-sm">No delivery records found.</div>
+            <div className="p-12 text-center text-gray-500 text-sm">
+              {dateFilter ? 'No deliveries found for this date.' : 'No delivery records found.'}
+            </div>
           ) : (
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
