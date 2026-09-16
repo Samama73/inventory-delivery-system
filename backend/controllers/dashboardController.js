@@ -8,12 +8,12 @@ function getDashboardSummary(req, res) {
   ).get().count;
 
   const pendingDeliveries = db.prepare(
-    "SELECT COUNT(*) as count FROM deliveries WHERE status = 'pending'"
-  ).get().count;
+  "SELECT COUNT(DISTINCT COALESCE(order_id, id)) as count FROM deliveries WHERE status = 'pending'"
+).get().count;
 
   const completedDeliveries = db.prepare(
-    "SELECT COUNT(*) as count FROM deliveries WHERE status = 'completed'"
-  ).get().count;
+  "SELECT COUNT(DISTINCT COALESCE(order_id, id)) as count FROM deliveries WHERE status = 'completed'"
+).get().count;
 
   // Recent 5 pending deliveries bhi bhej do dashboard pe dikhane ke liye
   const recentPending = db.prepare(
