@@ -25,16 +25,17 @@ function groupDeliveries(deliveries) {
     if (d.status === 'pending') groups[key].status = 'pending';
   }
   return Object.values(groups).sort((a, b) => {
-  if (!a.delivery_date) return 1;
-  if (!b.delivery_date) return -1;
-  return new Date(b.delivery_date) - new Date(a.delivery_date);
-});
+    if (!a.delivery_date) return 1;
+    if (!b.delivery_date) return -1;
+    return new Date(b.delivery_date) - new Date(a.delivery_date);
+  });
 }
 
 function Deliveries() {
   const [deliveries, setDeliveries] = useState([]);
   const [filter, setFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
@@ -54,10 +55,23 @@ function Deliveries() {
     }
   }
 
+  // Filter Logic with Date & Search Query
   const orders = groupDeliveries(deliveries).filter((order) => {
-    if (!dateFilter) return true;
-    if (!order.delivery_date) return false;
-    return order.delivery_date.split('T')[0] === dateFilter;
+    if (dateFilter && (!order.delivery_date || order.delivery_date.split('T')[0] !== dateFilter)) {
+      return false;
+    }
+
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim();
+      const matchName = order.customer_name?.toLowerCase().includes(query);
+      const matchPhone = order.phone_number?.toLowerCase().includes(query);
+      const matchAddress = order.address?.toLowerCase().includes(query);
+      const matchItems = order.items?.some((item) => item.item_name?.toLowerCase().includes(query));
+
+      return matchName || matchPhone || matchAddress || matchItems;
+    }
+
+    return true;
   });
 
   async function toggleOrderStatus(order) {
@@ -126,7 +140,28 @@ function Deliveries() {
           {/* Toolbar */}
           <div className="px-4 py-3 border-b border-gray-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-gray-700">Delivery Records</h2>
+            
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Search Bar */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search customer, phone, item..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+
+              {/* Date Filter */}
               <div className="flex items-center gap-2">
                 <label className="text-xs font-semibold text-gray-500 whitespace-nowrap">Filter by date</label>
                 <input
@@ -145,6 +180,8 @@ function Deliveries() {
                   </button>
                 )}
               </div>
+
+              {/* Status Filter */}
               <div className="flex border border-gray-300 rounded overflow-hidden text-sm">
                 {filterOptions.map((f, i) => (
                   <button
@@ -165,7 +202,7 @@ function Deliveries() {
             <div className="p-12 text-center text-gray-500 text-sm">Loading deliveries...</div>
           ) : orders.length === 0 ? (
             <div className="p-12 text-center text-gray-500 text-sm">
-              {dateFilter ? 'No deliveries found for this date.' : 'No delivery records found.'}
+              {searchQuery || dateFilter ? 'No matching deliveries found.' : 'No delivery records found.'}
             </div>
           ) : (
             <div className="overflow-x-auto w-full">
@@ -183,7 +220,12 @@ function Deliveries() {
                   {orders.map((order, idx) => (
                     <tr key={order.key} onClick={() => openEditForm(order)} className="hover:bg-gray-50 cursor-pointer">
                       <td className="px-4 py-2.5 text-gray-500 border-r border-gray-100">{idx + 1}</td>
-                      <td className="px-4 py-2.5 text-gray-700 border-r border-gray-100">{order.customer_name}</td>
+                      <td className="px-4 py-2.5 text-gray-700 border-r border-gray-100">
+                        <div className="font-medium text-gray-800">{order.customer_name}</div>
+                        {order.phone_number && (
+                          <div className="text-xs text-gray-500">{order.phone_number}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5 text-gray-600 border-r border-gray-100">
                         {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : <span className="text-amber-600">Unscheduled</span>}
                       </td>
@@ -280,7 +322,6 @@ function DeliveryFormInline({ order, onClose, onSaved }) {
       if (order && order.order_id) {
         await api.put(`/deliveries/group/${order.order_id}`, payload);
       } else if (order && !order.order_id) {
-        // Purani single entry — normal update route use karo
         await api.put(`/deliveries/${order.items[0].id}`, {
           item_name: orderItems[0].item_name,
           quantity: Number(orderItems[0].quantity),
@@ -310,7 +351,6 @@ function DeliveryFormInline({ order, onClose, onSaved }) {
       </div>
 
       <form onSubmit={handleSubmit} className="p-4">
-        {/* Customer Info - Top Section */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-4 mb-4 border-b border-gray-200">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Customer</label>
@@ -357,7 +397,6 @@ function DeliveryFormInline({ order, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Items Section - Table Style */}
         <div className="mb-4">
           <label className="block text-xs font-semibold text-gray-600 mb-2">Items</label>
 
@@ -460,7 +499,6 @@ function DeliveryFormInline({ order, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Remarks */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1">Remarks</label>
           <textarea
