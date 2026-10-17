@@ -24,6 +24,7 @@ router.get('/group/:order_id', getDeliveryGroup);
 router.post('/group', addDeliveryGroup);
 router.put('/group/:order_id', updateDeliveryGroup);
 router.patch('/group/:order_id/status', updateDeliveryGroupStatus);
+router.patch('/group/:order_id/followup', updateDeliveryGroupFollowUp);
 router.delete('/group/:order_id', deleteDeliveryGroup);
 
 // Single item routes
@@ -32,6 +33,7 @@ router.get('/:id', getDeliveryById);
 router.post('/', addDelivery);
 router.put('/:id', updateDelivery);
 router.patch('/:id/status', updateDeliveryStatus);
+router.patch('/:id/followup', updateDeliveryFollowUp);
 router.delete('/:id', deleteDelivery);
 
 module.exports = router;
