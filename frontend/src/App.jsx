@@ -4,7 +4,8 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Deliveries from './pages/Deliveries';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout'; // <-- Import the new Layout
+import Layout from './components/Layout'; 
+import FollowUps from './pages/FollowUps';
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
         <Route path="/inventory" element={<ProtectedRoute><Layout><Inventory /></Layout></ProtectedRoute>} />
         <Route path="/deliveries" element={<ProtectedRoute><Layout><Deliveries /></Layout></ProtectedRoute>} />
+        <Route path="/pending-items" element={<ProtectedRoute><Layout><FollowUps key="pending_items" field="pending_items" /></Layout></ProtectedRoute>} />
+        <Route path="/complaints" element={<ProtectedRoute><Layout><FollowUps key="complaint" field="complaint" /></Layout></ProtectedRoute>} />
         
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

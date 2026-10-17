@@ -117,6 +117,20 @@ try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN complaint_resolved INTEGER DEFAULT 0`);
 } catch (e) {}
 
+// Un customers ke liye jinki delivery abhi hui nahi hai (sidebar ke Pending Items / Complaint tabs)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS followups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL CHECK (type IN ('pending_items', 'complaint')),
+    customer_name TEXT NOT NULL,
+    phone_number TEXT DEFAULT '',
+    details TEXT NOT NULL,
+    resolved INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+  );
+`);
+
 // ---------- Migration tracker table (yeh yaad rakhti hai konsi migration ho chuki hai) ----------
 db.exec(`
   CREATE TABLE IF NOT EXISTS migrations (

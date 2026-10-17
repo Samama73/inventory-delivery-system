@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../api/axiosInstance';
 import AutocompleteInput from '../components/AutocompleteInput';
 
-function groupDeliveries(deliveries) {
+export function groupDeliveries(deliveries) {
   const groups = {};
   for (const d of deliveries) {
     const key = d.order_id || `single-${d.id}`;
@@ -269,7 +269,7 @@ function Deliveries() {
   );
 }
 
-function FollowUpCell({ order, field, onSaved }) {
+export function FollowUpCell({ order, field, onSaved }) {
   const text = order[field] || '';
   const resolved = Number(order[`${field}_resolved`]) === 1;
   const placeholder = field === 'complaint' ? 'Complaint likho...' : 'Pending items likho...';

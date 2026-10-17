@@ -9,6 +9,7 @@ const itemRoutes = require('./routes/itemRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const productRoutes = require('./routes/productRoutes'); 
+const followupRoutes = require('./routes/followupRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/followups', followupRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Inventory & Delivery Management API chal raha hai!' });
