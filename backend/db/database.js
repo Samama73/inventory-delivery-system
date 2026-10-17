@@ -100,6 +100,23 @@ try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN description TEXT DEFAULT ''`);
 } catch (e) {}
 
+// Follow-up columns: Pending Items aur Complaint (resolved: 0 = open, 1 = resolved)
+try {
+  db.exec(`ALTER TABLE deliveries ADD COLUMN pending_items TEXT DEFAULT ''`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE deliveries ADD COLUMN pending_items_resolved INTEGER DEFAULT 0`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE deliveries ADD COLUMN complaint TEXT DEFAULT ''`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE deliveries ADD COLUMN complaint_resolved INTEGER DEFAULT 0`);
+} catch (e) {}
+
 // ---------- Migration tracker table (yeh yaad rakhti hai konsi migration ho chuki hai) ----------
 db.exec(`
   CREATE TABLE IF NOT EXISTS migrations (

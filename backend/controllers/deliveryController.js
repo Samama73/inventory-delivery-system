@@ -275,6 +275,9 @@ function updateDeliveryGroup(req, res) {
     return res.status(404).json({ error: 'Order nahi mila.' });
   }
 
+  // Edit se pehle ka Pending Items / Complaint data yaad rakho
+  const followUp = existingRows[0];
+
   const runTransaction = db.transaction(() => {
     for (const row of existingRows) {
       db.prepare(`UPDATE items SET quantity = quantity + ?, updated_at = datetime('now', 'localtime') WHERE name = ?`)
@@ -294,9 +297,9 @@ function updateDeliveryGroup(req, res) {
       const totalAmount = unitPrice * qty;
 
       db.prepare(`
-        INSERT INTO deliveries (item_name, quantity, customer_name, phone_number, address, delivery_date, status, unit_price, total_amount, remarks, description, order_id)
-        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
-      `).run(line.item_name, qty, customer_name, phone_number || '', address || '', delivery_date || null, unitPrice, totalAmount, remarks || '', line.description || '', order_id);
+        INSERT INTO deliveries (item_name, quantity, customer_name, phone_number, address, delivery_date, status, unit_price, total_amount, remarks, description, order_id, pending_items, pending_items_resolved, complaint, complaint_resolved)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(line.item_name, qty, customer_name, phone_number || '', address || '', delivery_date || null, unitPrice, totalAmount, remarks || '', line.description || '', order_id, followUp.pending_items || '', followUp.pending_items_resolved || 0, followUp.complaint || '', followUp.complaint_resolved || 0);
 
       db.prepare(`UPDATE items SET quantity = quantity - ?, updated_at = datetime('now', 'localtime') WHERE id = ?`)
         .run(qty, item.id);
@@ -357,6 +360,51 @@ function updateDeliveryGroupStatus(req, res) {
   res.json(updated);
 }
 
+// ---------- Pending Items / Complaint (follow-up) ----------
+const FOLLOWUP_FIELDS = ['pending_items', 'pending_items_resolved', 'complaint', 'complaint_resolved'];
+
+function buildFollowUpUpdate(body) {
+  const sets = [];
+  const vals = [];
+  for (const f of FOLLOWUP_FIELDS) {
+    if (body[f] !== undefined) {
+      sets.push(`${f} = ?`);
+      vals.push(f.endsWith('_resolved') ? (body[f] ? 1 : 0) : String(body[f]).trim());
+    }
+  }
+  return { sets, vals };
+}
+
+function updateDeliveryGroupFollowUp(req, res) {
+  const { order_id } = req.params;
+  const { sets, vals } = buildFollowUpUpdate(req.body);
+  if (sets.length === 0) {
+    return res.status(400).json({ error: 'Update karne ke liye koi field nahi bheji.' });
+  }
+
+  const result = db.prepare(`UPDATE deliveries SET ${sets.join(', ')} WHERE order_id = ?`).run(...vals, order_id);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Order nahi mila.' });
+  }
+
+  res.json(db.prepare('SELECT * FROM deliveries WHERE order_id = ?').all(order_id));
+}
+
+function updateDeliveryFollowUp(req, res) {
+  const { id } = req.params;
+  const { sets, vals } = buildFollowUpUpdate(req.body);
+  if (sets.length === 0) {
+    return res.status(400).json({ error: 'Update karne ke liye koi field nahi bheji.' });
+  }
+
+  const result = db.prepare(`UPDATE deliveries SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Delivery nahi mili.' });
+  }
+
+  res.json(db.prepare('SELECT * FROM deliveries WHERE id = ?').get(id));
+}
+
 module.exports = {
   getAllDeliveries,
   getDeliveryById,
@@ -369,4 +417,6 @@ module.exports = {
   updateDeliveryGroup,
   deleteDeliveryGroup,
   updateDeliveryGroupStatus,
+  updateDeliveryGroupFollowUp,
+  updateDeliveryFollowUp,
 };

@@ -17,6 +17,10 @@ function groupDeliveries(deliveries) {
         remarks: d.remarks,
         status: d.status,
         created_at: d.created_at,
+        pending_items: d.pending_items,
+        pending_items_resolved: d.pending_items_resolved,
+        complaint: d.complaint,
+        complaint_resolved: d.complaint_resolved,
         items: [],
       };
     }
@@ -213,6 +217,8 @@ function Deliveries() {
                     <th className="px-4 py-2.5 font-semibold text-gray-600 border-r border-gray-200">Customer</th>
                     <th className="px-4 py-2.5 font-semibold text-gray-600 border-r border-gray-200">Date</th>
                     <th className="px-4 py-2.5 font-semibold text-gray-600 border-r border-gray-200">Status</th>
+                    <th className="px-4 py-2.5 font-semibold text-gray-600 border-r border-gray-200">Pending Items</th>
+                    <th className="px-4 py-2.5 font-semibold text-gray-600 border-r border-gray-200">Complaint</th>
                     <th className="px-4 py-2.5 font-semibold text-gray-600 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -238,6 +244,12 @@ function Deliveries() {
                           {order.status === 'completed' ? 'Fulfilled' : 'Pending'}
                         </span>
                       </td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 align-top" onClick={(e) => e.stopPropagation()}>
+                        <FollowUpCell order={order} field="pending_items" onSaved={fetchDeliveries} />
+                      </td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 align-top" onClick={(e) => e.stopPropagation()}>
+                        <FollowUpCell order={order} field="complaint" onSaved={fetchDeliveries} />
+                      </td>
                       <td className="px-4 py-2.5 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => toggleOrderStatus(order)} className="text-blue-600 hover:underline font-medium">
                           {order.status === 'pending' ? 'Complete' : 'Revert'}
@@ -253,6 +265,86 @@ function Deliveries() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function FollowUpCell({ order, field, onSaved }) {
+  const text = order[field] || '';
+  const resolved = Number(order[`${field}_resolved`]) === 1;
+  const placeholder = field === 'complaint' ? 'Complaint likho...' : 'Pending items likho...';
+
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(text);
+  const [busy, setBusy] = useState(false);
+
+  async function send(patch) {
+    setBusy(true);
+    try {
+      const url = order.order_id
+        ? `/deliveries/group/${order.order_id}/followup`
+        : `/deliveries/${order.items[0].id}/followup`;
+      await api.patch(url, patch);
+      setEditing(false);
+      onSaved();
+    } catch {
+      alert('Unable to update. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleSave() {
+    send({ [field]: value.trim(), [`${field}_resolved`]: false });
+  }
+
+  if (editing) {
+    return (
+      <div className="w-56 whitespace-normal">
+        <textarea
+          rows={2}
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={placeholder}
+          className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <div className="flex gap-3 mt-1 text-xs font-medium">
+          <button disabled={busy} onClick={handleSave} className="text-blue-600 hover:underline">Save</button>
+          <button disabled={busy} onClick={() => { setEditing(false); setValue(text); }} className="text-gray-500 hover:underline">Cancel</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!text) {
+    return (
+      <button onClick={() => { setValue(''); setEditing(true); }} className="text-xs font-medium text-gray-400 hover:text-blue-600 hover:underline">
+        + Add
+      </button>
+    );
+  }
+
+  return (
+    <div className="w-56 whitespace-normal">
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+        resolved
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : 'bg-red-50 text-red-700 border-red-200'
+      }`}>
+        {resolved ? 'Resolved' : 'Open'}
+      </span>
+      <div className={`mt-1 text-sm ${resolved ? 'text-gray-600' : 'text-red-700'}`}>{text}</div>
+      <div className="flex gap-3 mt-1 text-xs font-medium">
+        <button
+          disabled={busy}
+          onClick={() => send({ [`${field}_resolved`]: !resolved })}
+          className={resolved ? 'text-gray-500 hover:underline' : 'text-emerald-600 hover:underline'}
+        >
+          {resolved ? 'Reopen' : 'Mark Resolved'}
+        </button>
+        <button disabled={busy} onClick={() => { setValue(text); setEditing(true); }} className="text-gray-500 hover:underline">Edit</button>
+      </div>
     </div>
   );
 }

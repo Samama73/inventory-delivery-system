@@ -12,7 +12,9 @@ const {
   getDeliveryGroup,
   updateDeliveryGroup,
   deleteDeliveryGroup,
-  updateDeliveryGroupStatus
+  updateDeliveryGroupStatus,
+  updateDeliveryGroupFollowUp,
+  updateDeliveryFollowUp,
 } = require('../controllers/deliveryController');
 
 router.use(authMiddleware);
