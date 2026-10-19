@@ -19,6 +19,7 @@ export function groupDeliveries(deliveries) {
         created_at: d.created_at,
         pending_items: d.pending_items,
         pending_items_resolved: d.pending_items_resolved,
+        pending_items_delivered_date: d.pending_items_delivered_date,
         complaint: d.complaint,
         complaint_resolved: d.complaint_resolved,
         items: [],
@@ -277,6 +278,10 @@ export function FollowUpCell({ order, field, onSaved }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(text);
   const [busy, setBusy] = useState(false);
+  const isPending = field === 'pending_items';
+  const deliveredDate = order.pending_items_delivered_date || '';
+  const [askDate, setAskDate] = useState(false);
+  const [dateValue, setDateValue] = useState(new Date().toLocaleDateString('en-CA')); // YYYY-MM-DD, local
 
   async function send(patch) {
     setBusy(true);
@@ -286,6 +291,7 @@ export function FollowUpCell({ order, field, onSaved }) {
         : `/deliveries/${order.items[0].id}/followup`;
       await api.patch(url, patch);
       setEditing(false);
+      setAskDate(false);
       onSaved();
     } catch {
       alert('Unable to update. Please try again.');
@@ -295,7 +301,11 @@ export function FollowUpCell({ order, field, onSaved }) {
   }
 
   function handleSave() {
-    send({ [field]: value.trim(), [`${field}_resolved`]: false });
+    send({
+      [field]: value.trim(),
+      [`${field}_resolved`]: false,
+      ...(isPending ? { pending_items_delivered_date: '' } : {}),
+    });
   }
 
   if (editing) {
@@ -317,6 +327,30 @@ export function FollowUpCell({ order, field, onSaved }) {
     );
   }
 
+  if (askDate) {
+  return (
+    <div className="w-56 whitespace-normal">
+      <label className="text-xs text-gray-500">Delivered on:</label>
+      <input
+        type="date"
+        value={dateValue}
+        onChange={(e) => setDateValue(e.target.value)}
+        className="block w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+      />
+      <div className="flex gap-3 mt-1 text-xs font-medium">
+        <button
+          disabled={busy || !dateValue}
+          onClick={() => send({ pending_items_resolved: true, pending_items_delivered_date: dateValue })}
+          className="text-emerald-600 hover:underline"
+        >
+          Confirm
+        </button>
+        <button onClick={() => setAskDate(false)} className="text-gray-500 hover:underline">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
   if (!text) {
     return (
       <button onClick={() => { setValue(''); setEditing(true); }} className="text-xs font-medium text-gray-400 hover:text-blue-600 hover:underline">
@@ -335,10 +369,19 @@ export function FollowUpCell({ order, field, onSaved }) {
         {resolved ? 'Resolved' : 'Open'}
       </span>
       <div className={`mt-1 text-sm ${resolved ? 'text-gray-600' : 'text-red-700'}`}>{text}</div>
+      {isPending && resolved && deliveredDate && (
+        <div className="mt-0.5 text-xs text-emerald-700">Delivered: {deliveredDate}</div>
+      )}
       <div className="flex gap-3 mt-1 text-xs font-medium">
         <button
           disabled={busy}
-          onClick={() => send({ [`${field}_resolved`]: !resolved })}
+          onClick={() => {
+            if (isPending && !resolved) { setAskDate(true); return; }
+            send({
+              [`${field}_resolved`]: !resolved,
+              ...(isPending ? { pending_items_delivered_date: '' } : {}),
+            });
+          }}
           className={resolved ? 'text-gray-500 hover:underline' : 'text-emerald-600 hover:underline'}
         >
           {resolved ? 'Reopen' : 'Mark Resolved'}

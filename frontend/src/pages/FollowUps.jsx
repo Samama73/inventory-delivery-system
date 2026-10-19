@@ -21,6 +21,8 @@ function FollowUps({ field }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ customer_name: '', phone_number: '', details: '' });
   const [saving, setSaving] = useState(false);
+  const [dateForId, setDateForId] = useState(null);
+  const [dateValue, setDateValue] = useState('');
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -127,9 +129,14 @@ function FollowUps({ field }) {
     }
   }
 
-  async function toggleResolved(f) {
+  async function toggleResolved(f, deliveredDate = '') {
+    const nowResolved = !(Number(f.resolved) === 1);
     try {
-      await api.patch(`/followups/${f.id}`, { resolved: !(Number(f.resolved) === 1) });
+      await api.patch(`/followups/${f.id}`, {
+        resolved: nowResolved,
+        ...(field === 'pending_items' ? { pending_items_delivered_date: nowResolved ? deliveredDate : '' } : {}),
+      });
+      setDateForId(null);
       fetchAll();
     } catch {
       alert('Unable to update. Please try again.');
@@ -288,16 +295,42 @@ function FollowUps({ field }) {
                             {r.resolved ? 'Resolved' : 'Open'}
                           </span>
                           <div className={`mt-1 text-sm ${r.resolved ? 'text-gray-600' : 'text-red-700'}`}>{r.text}</div>
-                          <div className="flex gap-3 mt-1 text-xs font-medium">
-                            <button
-                              onClick={() => toggleResolved(r.followup)}
-                              className={r.resolved ? 'text-gray-500 hover:underline' : 'text-emerald-600 hover:underline'}
-                            >
-                              {r.resolved ? 'Reopen' : 'Mark Resolved'}
-                            </button>
-                            <button onClick={() => openEditForm(r.followup)} className="text-gray-500 hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(r.followup)} className="text-red-500 hover:underline">Delete</button>
-                          </div>
+                          {field === 'pending_items' && r.resolved && r.followup.pending_items_delivered_date && (
+                            <div className="mt-0.5 text-xs text-emerald-700">Delivered: {r.followup.pending_items_delivered_date}</div>
+                          )}
+                          {dateForId === r.followup.id ? (
+                            <div className="mt-1">
+                              <label className="text-xs text-gray-500">Delivered on:</label>
+                              <input
+                                type="date"
+                                value={dateValue}
+                                onChange={(e) => setDateValue(e.target.value)}
+                                className="block w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              <div className="flex gap-3 mt-1 text-xs font-medium">
+                                <button disabled={!dateValue} onClick={() => toggleResolved(r.followup, dateValue)} className="text-emerald-600 hover:underline">Confirm</button>
+                                <button onClick={() => setDateForId(null)} className="text-gray-500 hover:underline">Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-3 mt-1 text-xs font-medium">
+                              <button
+                                onClick={() => {
+                                  if (field === 'pending_items' && !r.resolved) {
+                                    setDateValue(new Date().toLocaleDateString('en-CA'));
+                                    setDateForId(r.followup.id);
+                                  } else {
+                                    toggleResolved(r.followup);
+                                  }
+                                }}
+                                className={r.resolved ? 'text-gray-500 hover:underline' : 'text-emerald-600 hover:underline'}
+                              >
+                                {r.resolved ? 'Reopen' : 'Mark Resolved'}
+                              </button>
+                              <button onClick={() => openEditForm(r.followup)} className="text-gray-500 hover:underline">Edit</button>
+                              <button onClick={() => handleDelete(r.followup)} className="text-red-500 hover:underline">Delete</button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </td>

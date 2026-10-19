@@ -117,6 +117,8 @@ try {
   db.exec(`ALTER TABLE deliveries ADD COLUMN complaint_resolved INTEGER DEFAULT 0`);
 } catch (e) {}
 
+
+
 // Un customers ke liye jinki delivery abhi hui nahi hai (sidebar ke Pending Items / Complaint tabs)
 db.exec(`
   CREATE TABLE IF NOT EXISTS followups (
@@ -130,6 +132,14 @@ db.exec(`
     updated_at TEXT DEFAULT (datetime('now', 'localtime'))
   );
 `);
+
+// Pending item kab deliver hua — uski date
+try {
+  db.exec(`ALTER TABLE deliveries ADD COLUMN pending_items_delivered_date TEXT DEFAULT ''`);
+} catch (e) {}
+try {
+  db.exec(`ALTER TABLE followups ADD COLUMN pending_items_delivered_date TEXT DEFAULT ''`);
+} catch (e) {}
 
 // ---------- Migration tracker table (yeh yaad rakhti hai konsi migration ho chuki hai) ----------
 db.exec(`

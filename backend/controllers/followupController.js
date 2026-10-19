@@ -46,7 +46,7 @@ function updateFollowup(req, res) {
     return res.status(404).json({ error: 'Record nahi mila.' });
   }
 
-  const { customer_name, phone_number, details, resolved } = req.body;
+  const { customer_name, phone_number, details, resolved, pending_items_delivered_date } = req.body;
 
   const newName = customer_name !== undefined ? String(customer_name).trim() : existing.customer_name;
   const newDetails = details !== undefined ? String(details).trim() : existing.details;
@@ -55,12 +55,15 @@ function updateFollowup(req, res) {
 
   const newPhone = phone_number !== undefined ? String(phone_number).trim() : existing.phone_number;
   const newResolved = resolved !== undefined ? (resolved ? 1 : 0) : existing.resolved;
+  const newDeliveredDate = pending_items_delivered_date !== undefined
+  ? String(pending_items_delivered_date).trim()
+  : (existing.pending_items_delivered_date || '');
 
   db.prepare(`
     UPDATE followups
-    SET customer_name = ?, phone_number = ?, details = ?, resolved = ?, updated_at = datetime('now', 'localtime')
+    SET customer_name = ?, phone_number = ?, details = ?, resolved = ?, pending_items_delivered_date = ?, updated_at = datetime('now', 'localtime')
     WHERE id = ?
-  `).run(newName, newPhone, newDetails, newResolved, id);
+  `).run(newName, newPhone, newDetails, newResolved, newDeliveredDate, id);
 
   res.json(db.prepare('SELECT * FROM followups WHERE id = ?').get(id));
 }
