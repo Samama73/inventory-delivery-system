@@ -297,7 +297,7 @@ function updateDeliveryGroup(req, res) {
       const totalAmount = unitPrice * qty;
 
       db.prepare(`
-        INSERT INTO deliveries (..., pending_items, pending_items_resolved, complaint, complaint_resolved, pending_items_delivered_date)
+        INSERT INTO deliveries (item_name, quantity, customer_name, phone_number, address, delivery_date, status, unit_price, total_amount, remarks, description, order_id, pending_items, pending_items_resolved, complaint, complaint_resolved, pending_items_delivered_date)
         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(line.item_name, qty, customer_name, phone_number || '', address || '', delivery_date || null, unitPrice, totalAmount, remarks || '', line.description || '', order_id, followUp.pending_items || '', followUp.pending_items_resolved || 0, followUp.complaint || '', followUp.complaint_resolved || 0, followUp.pending_items_delivered_date || '');
 
